@@ -20,15 +20,17 @@ my $prev_commit = "";
 my $main_pid = 0;
 
 while (1) {
-    my $git_pull_output = `git pull origin test`;   # TODO: ブランチ名書き換え
-    die "Failed to execute git pull: $!\n" if $?;
+    my $remote_latest_commit = `git ls-remote --heads origin test | cut -f 1`;  # TODO: ブランチ名書き換え
+    die "Failed to execute git ls-remote: $!\n" if $?;
 
-    my $current_commit = `git rev-parse HEAD`;
-    chomp($current_commit);
-    die "Failed to get current commit hash: $!\n" if $?;
-
-    if ($initial_pull || $prev_commit ne $current_commit) {
+    if ($initial_pull || $prev_commit ne $remote_latest_commit) {
         $initial_pull = 0;
+
+        my $git_pull_output = `git pull origin test`;
+        die "Failed to execute git pull: $!\n" if $?;
+
+        my $current_commit = `git rev-parse HEAD`;
+        die "Failed to get current commit hash: $!\n" if $?;
 
         if ($main_pid) {
             kill 'TERM', $main_pid;
