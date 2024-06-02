@@ -11,6 +11,7 @@ use Adapter::Logger;
 my %subcommands = (
     'hello'   => 'Dpb::Hello',  # TODO: Delete this sample subcommand
     'run'     => 'Dpb::Run',
+    'log'     => 'Dpb::Log',
 );
 
 my $subcommand = shift @ARGV;
@@ -23,9 +24,13 @@ unless ($subcommand) {
 if (exists $subcommands{$subcommand}) {
     my $module = $subcommands{$subcommand};
     load $module;
-    $module->new(
-        logger => Adapter::Logger->new()
-    )->run(@ARGV);
+    if ($subcommand eq 'log') {
+        $module->run(@ARGV);
+    } else {
+        $module->new(
+            logger => Adapter::Logger->new()
+        )->run(@ARGV);
+    }
 } else {
     print "Unknown subcommand: $subcommand\n";
     exit 1;
