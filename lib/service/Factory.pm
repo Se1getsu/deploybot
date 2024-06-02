@@ -8,6 +8,7 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw(create);
 
 use Module::Load;
+use Adapter::WebhookLogger;
 
 sub create {
     my ($module) = @_;
@@ -15,13 +16,13 @@ sub create {
     if ($module eq 'Dpb::Hello') {
         load $module;
         return $module->new(
-            logger => Adapter::Logger->new()
+            logger => Adapter::WebhookLogger->new()
         );
 
     } elsif ($module eq 'Dpb::Run') {
         load $module;
         return $module->new(
-            logger => Adapter::Logger->new()
+            logger => Adapter::WebhookLogger->new()
         );
 
     } elsif ($module eq 'Dpb::Log') {

@@ -5,7 +5,6 @@ use warnings;
 
 use FindBin;
 use lib "$FindBin::Bin/lib";
-use Adapter::Logger;
 use Service::Factory;
 
 my %subcommands = (
