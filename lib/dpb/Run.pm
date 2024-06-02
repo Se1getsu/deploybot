@@ -6,6 +6,7 @@ use warnings;
 use Cwd;
 use POSIX ":sys_wait_h";
 use Adapter::Git;
+use Adapter::Logger;
 
 sub exec_repository {
     exec('python3', 'main.py') or die "Failed to execute main.py: $!\n";
@@ -43,16 +44,16 @@ EOD
     my $main_pid = 0;
 
     while (1) {
-        print "INFO: Checking for remote updates...\n";
+        log_info "Checking for remote updates...";
         my $remote_latest_commit = get_remote_latest_commit_hash $branch_name;
 
         if ($initial_pull || $prev_commit ne $remote_latest_commit) {
             $initial_pull = 0;
 
-            print "INFO: Applying remote changes...\n";
+            log_info "Applying remote changes...";
             pull_reposiotory;
 
-            print "INFO: Restarting the process...\n";
+            log_info "Restarting the process...";
             if ($main_pid) {
                 kill 'TERM', $main_pid;
                 waitpid($main_pid, 0);
@@ -60,7 +61,7 @@ EOD
 
             if (my $pid = fork()) {     # parent process
                 $main_pid = $pid;
-                print "INFO: Deployment complete.\n";
+                log_info "Deployment complete.";
             } elsif (defined $pid) {    # child process
                 exec_repository;
             } else {
@@ -69,7 +70,7 @@ EOD
 
             $prev_commit = get_currect_commit_hash;
         } else {
-            print "INFO: No updates.\n"
+            log_info "No updates."
         }
 
         sleep(10);  # TODO: スリープ間隔戻す
