@@ -12,6 +12,7 @@ my %subcommands = (
     'hello'   => 'Dpb::Hello',  # TODO: Delete this sample subcommand
     'run'     => 'Dpb::Run',
     'log'     => 'Dpb::Log',
+    'set-log' => 'Dpb::SetLog',
 );
 
 my $subcommand = shift @ARGV;

@@ -28,6 +28,10 @@ sub create {
         load $module;
         return $module;
 
+    } elsif ($module eq 'Dpb::SetLog') {
+        load $module;
+        return $module;
+
     } else {
         die "The method of creating module $module is not defined."
     }
