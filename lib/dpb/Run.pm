@@ -20,7 +20,7 @@ has 'logger' => (
     required => 1
 );
 
-sub exec_repository {
+sub _exec_repository {
     exec('python3', 'main.py') or die "Failed to execute main.py: $!\n";
 }
 
@@ -75,7 +75,7 @@ EOD
                 $main_pid = $pid;
                 $self->logger->info("Deployment complete.");
             } elsif (defined $pid) {    # child process
-                exec_repository;
+                _exec_repository;
             } else {
                 die "Failed to fork: $!\n";
             }
