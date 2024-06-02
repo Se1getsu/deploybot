@@ -6,6 +6,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/lib";
 use Module::Load;
+use Adapter::Logger;
 
 my %subcommands = (
     'hello'   => 'Dpb::Hello',  # TODO: Delete this sample subcommand
@@ -22,7 +23,9 @@ unless ($subcommand) {
 if (exists $subcommands{$subcommand}) {
     my $module = $subcommands{$subcommand};
     load $module;
-    $module->run(@ARGV);
+    $module->new(
+        logger => Adapter::Logger->new()
+    )->run(@ARGV);
 } else {
     print "Unknown subcommand: $subcommand\n";
     exit 1;

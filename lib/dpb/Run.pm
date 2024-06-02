@@ -4,16 +4,28 @@ use strict;
 use warnings;
 
 use Cwd;
+use Moose;
+use Moose::Util::TypeConstraints;
 use POSIX ":sys_wait_h";
 use Adapter::Git;
-use Adapter::Logger;
+
+subtype 'LoggerRoleObject',
+    as 'Object',
+    where { $_->does('Role::LoggerRole') },
+    message { "The object you provided does not implement LoggerRole" };
+
+has 'logger' => (
+    is       => 'ro',
+    isa      => 'LoggerRoleObject',
+    required => 1
+);
 
 sub exec_repository {
     exec('python3', 'main.py') or die "Failed to execute main.py: $!\n";
 }
 
 sub run {
-    my $class = shift;
+    my $self = shift;
     my @args = @_;
 
     if (@args != 1) {
@@ -44,16 +56,16 @@ EOD
     my $main_pid = 0;
 
     while (1) {
-        log_info "Checking for remote updates...";
+        $self->logger->info("Checking for remote updates...");
         my $remote_latest_commit = get_remote_latest_commit_hash $branch_name;
 
         if ($initial_pull || $prev_commit ne $remote_latest_commit) {
             $initial_pull = 0;
 
-            log_info "Applying remote changes...";
+            $self->logger->info("Applying remote changes...");
             pull_reposiotory;
 
-            log_info "Restarting the process...";
+            $self->logger->info("Restarting the process...");
             if ($main_pid) {
                 kill 'TERM', $main_pid;
                 waitpid($main_pid, 0);
@@ -61,7 +73,7 @@ EOD
 
             if (my $pid = fork()) {     # parent process
                 $main_pid = $pid;
-                log_info "Deployment complete.";
+                $self->logger->info("Deployment complete.");
             } elsif (defined $pid) {    # child process
                 exec_repository;
             } else {
@@ -70,7 +82,7 @@ EOD
 
             $prev_commit = get_currect_commit_hash;
         } else {
-            log_info "No updates."
+            $self->logger->info("No updates.");
         }
 
         sleep(10);  # TODO: スリープ間隔戻す
