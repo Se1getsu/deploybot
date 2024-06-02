@@ -5,8 +5,8 @@ use warnings;
 
 use FindBin;
 use lib "$FindBin::Bin/lib";
-use Module::Load;
 use Adapter::Logger;
+use Service::Factory;
 
 my %subcommands = (
     'hello'   => 'Dpb::Hello',  # TODO: Delete this sample subcommand
@@ -23,14 +23,7 @@ unless ($subcommand) {
 
 if (exists $subcommands{$subcommand}) {
     my $module = $subcommands{$subcommand};
-    load $module;
-    if ($subcommand eq 'log') {
-        $module->run(@ARGV);
-    } else {
-        $module->new(
-            logger => Adapter::Logger->new()
-        )->run(@ARGV);
-    }
+    create($module)->run(@ARGV);
 } else {
     print "Unknown subcommand: $subcommand\n";
     exit 1;
