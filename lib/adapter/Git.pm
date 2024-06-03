@@ -9,7 +9,7 @@ our @EXPORT = qw(get_origin_url get_branch_name get_currect_commit_hash get_remo
 
 sub _execute {
     my ($command, $error_message) = @_;
-    my $result = qx{bash -c '$command' 2>&1};
+    my $result = qx{bash -o pipefail -c '$command' 2>&1};
     if ($? == 0) {
         return ($result, undef);
     } else {
@@ -45,8 +45,8 @@ sub get_currect_commit_hash {
 
 sub get_remote_latest_commit_hash {
     my ($branch_name) = @_;
-    return _execute("git ls-remote --heads origin $branch_name | cut -f 1",
-                    "Failed to execute git ls-remote.");
+    return _execute("git ls-remote --heads --exit-code origin $branch_name | cut -f 1",
+                    "Failed to execute git ls-remote. Ensure that $branch_name branch exists.");
 }
 
 sub pull_reposiotory {
