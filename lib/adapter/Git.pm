@@ -50,7 +50,8 @@ sub get_remote_latest_commit_hash {
 }
 
 sub pull_reposiotory {
-    return _execute("git pull -q origin test",
+    my ($branch_name) = @_;
+    return _execute("git pull -q origin $branch_name",
                     "Failed to execute git pull.");
 }
 

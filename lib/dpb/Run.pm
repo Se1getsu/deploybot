@@ -49,7 +49,7 @@ sub _depoy {
     $self->{_initial_pull} = 0;
 
     $self->logger->info("Applying remote changes...");
-    my ($result, $error) = pull_reposiotory;
+    my ($result, $error) = pull_reposiotory $self->{_branch_name};
     return $error if defined $error;
 
     $self->logger->info("Restarting the process...");
