@@ -47,13 +47,13 @@ sub _depoy {
     return $error if defined $error;
 
     $self->logger->info("Restarting the process...");
-    if ($self->{_main_pid}) {
-        kill 'TERM', $self->{_main_pid};
-        waitpid($self->{_main_pid}, 0);
+    if ($self->{_exec_pid}) {
+        kill 'TERM', $self->{_exec_pid};
+        waitpid($self->{_exec_pid}, 0);
     }
 
     if (my $pid = fork()) {     # parent process
-        $self->{_main_pid} = $pid;
+        $self->{_exec_pid} = $pid;
     } elsif (defined $pid) {    # child process
         _exec_repository;
     } else {
@@ -101,7 +101,7 @@ EOD
 
     $self->{_initial_pull} = 1;
     $self->{_prev_commit} = "";
-    $self->{_main_pid} = 0;
+    $self->{_exec_pid} = 0;
 
     while (1) {
         if (_needs_deploy $self) {
