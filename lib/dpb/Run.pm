@@ -20,6 +20,12 @@ has 'logger' => (
     required => 1
 );
 
+sub _test_log {
+    my ($self) = @_;
+    $self->logger->info("**This channel is assigned to [0] dpb standard log**");
+    $self->logger->error("**This channel is assigned to [1] dpb error log**");
+}
+
 sub _exec_repository {
     exec('python3', 'main.py') or die "Failed to execute main.py: $!\n";
 }
@@ -102,6 +108,9 @@ EOD
     $self->{_initial_pull} = 1;
     $self->{_prev_commit} = "";
     $self->{_exec_pid} = 0;
+
+    $self->logger->info("**dpb (DeployBot) started.**");
+    _test_log $self;
 
     while (1) {
         if (_needs_deploy $self) {
