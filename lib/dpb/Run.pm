@@ -24,6 +24,49 @@ sub _exec_repository {
     exec('python3', 'main.py') or die "Failed to execute main.py: $!\n";
 }
 
+sub _needs_deploy {
+    my $self = shift;
+    return 1 if $self->{_initial_pull};
+
+    $self->logger->info("Checking for remote updates...");
+    my ($remote_latest_commit, $error) = get_remote_latest_commit_hash $self->{_branch_name};
+    if (defined $error) {
+        $self->logger->error($error);
+        return 0;
+    }
+    return $self->{_prev_commit} ne $remote_latest_commit
+}
+
+sub _depoy {
+    my $self = shift;
+
+    $self->{_initial_pull} = 0;
+
+    $self->logger->info("Applying remote changes...");
+    my ($result, $error) = pull_reposiotory;
+    return $error if defined $error;
+
+    $self->logger->info("Restarting the process...");
+    if ($self->{_main_pid}) {
+        kill 'TERM', $self->{_main_pid};
+        waitpid($self->{_main_pid}, 0);
+    }
+
+    if (my $pid = fork()) {     # parent process
+        $self->{_main_pid} = $pid;
+    } elsif (defined $pid) {    # child process
+        _exec_repository;
+    } else {
+        return "Failed to fork: $!\n";
+    }
+
+    ($result, $error) = get_currect_commit_hash;
+    return $error if defined $error;
+    $self->{_prev_commit} = $result;
+
+    return undef
+}
+
 sub run {
     my $self = shift;
     my @args = @_;
@@ -38,49 +81,36 @@ sub run {
 
     chdir($target_dir) or die "Directory $target_dir not found: $!\n";
 
-    my $origin_url = get_origin_url;
-    my $branch_name = get_branch_name;
-    die "You are in 'detached HEAD' state.\n" if $branch_name eq "HEAD";
+    my ($result, $error) = get_origin_url;
+    die $error if defined $error;
+    my $origin_url = $result;
+
+    ($result, $error) = get_branch_name;
+    die $error if defined $error;
+    die "You are in 'detached HEAD' state.\n" if $result eq "HEAD";
+    $self->{_branch_name} = $result;
 
     print <<EOD;
 --- TARGET INFO ---
 path: $absolute_target_dir
 origin_url: $origin_url
-branch_name: $branch_name
+branch_name: $self->{_branch_name}
 
 --- START RUNNING ---
 EOD
 
-    my $initial_pull = 1;
-    my $prev_commit = "";
-    my $main_pid = 0;
+    $self->{_initial_pull} = 1;
+    $self->{_prev_commit} = "";
+    $self->{_main_pid} = 0;
 
     while (1) {
-        $self->logger->info("Checking for remote updates...");
-        my $remote_latest_commit = get_remote_latest_commit_hash $branch_name;
-
-        if ($initial_pull || $prev_commit ne $remote_latest_commit) {
-            $initial_pull = 0;
-
-            $self->logger->info("Applying remote changes...");
-            pull_reposiotory;
-
-            $self->logger->info("Restarting the process...");
-            if ($main_pid) {
-                kill 'TERM', $main_pid;
-                waitpid($main_pid, 0);
-            }
-
-            if (my $pid = fork()) {     # parent process
-                $main_pid = $pid;
-                $self->logger->info("Deployment complete.");
-            } elsif (defined $pid) {    # child process
-                _exec_repository;
+        if (_needs_deploy $self) {
+            my $error = _depoy $self;
+            if (defined $error) {
+                $self->logger->error("Deploy failed: $error");
             } else {
-                die "Failed to fork: $!\n";
+                $self->logger->info("Deployment complete.");
             }
-
-            $prev_commit = get_currect_commit_hash;
         } else {
             $self->logger->info("No updates.");
         }

@@ -17,4 +17,10 @@ sub info {
     print "[$timestamp] INFO: $message\n";
 }
 
+sub error {
+    my ($self, $message) = @_;
+    my $timestamp = localtime;
+    print "[$timestamp] ERROR: $message\n";
+}
+
 1;

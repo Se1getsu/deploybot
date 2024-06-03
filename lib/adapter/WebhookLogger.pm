@@ -15,9 +15,7 @@ sub new {
 }
 
 sub _send {
-    my ($content) = @_;
-    my @webhook_urls = load_urls;
-    my $url = $webhook_urls[0];
+    my ($content, $url) = @_;
     my $json = JSON::MaybeXS->new(utf8 => 1, pretty => 1);
     my $request_body = $json->encode({ content => $content });
     system('curl', '-X', 'POST', '-H', 'Content-Type: application/json', '-d', $request_body, $url)
@@ -26,7 +24,15 @@ sub _send {
 sub info {
     my ($self, $message) = @_;
     my $timestamp = localtime;
-    _send "[$timestamp] INFO: $message\n";
+    my @webhook_urls = load_urls;
+    _send("[$timestamp] INFO: $message\n", $webhook_urls[0]);
+}
+
+sub error {
+    my ($self, $message) = @_;
+    my $timestamp = localtime;
+    my @webhook_urls = load_urls;
+    _send("[$timestamp] ERROR: $message\n", $webhook_urls[1]);
 }
 
 1;
