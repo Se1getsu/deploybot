@@ -9,20 +9,29 @@ our @EXPORT = qw(create);
 
 use Module::Load;
 use Adapter::WebhookLogger;
+use Adapter::WebhookURLRepository 'load_urls';
 
 sub create {
     my ($module) = @_;
 
     if ($module eq 'Dpb::Hello') {
         load $module;
+        my @webhook_urls = load_urls;
         return $module->new(
-            logger => Adapter::WebhookLogger->new()
+            logger => Adapter::WebhookLogger->new(
+                info_webhook => $webhook_urls[0],
+                error_webhook => $webhook_urls[1],
+            )
         );
 
     } elsif ($module eq 'Dpb::Run') {
         load $module;
+        my @webhook_urls = load_urls;
         return $module->new(
-            logger => Adapter::WebhookLogger->new()
+            logger => Adapter::WebhookLogger->new(
+                info_webhook => $webhook_urls[0],
+                error_webhook => $webhook_urls[1],
+            )
         );
 
     } elsif ($module eq 'Dpb::Log') {
