@@ -7,11 +7,14 @@ use Moose;
 with 'Role::LoggerRole';
 
 use JSON::MaybeXS;
-use Adapter::WebhookURLRepository 'load_urls';
 
 sub new {
-    my ($class) = @_;
-    return bless {}, $class;
+    my ($class, %args) = @_;
+    my $self = {
+        _info_webhook_url   => $args{info_webhook},
+        _error_webhook_url  => $args{error_webhook},
+    };
+    return bless $self, $class;
 }
 
 sub _send {
@@ -24,15 +27,13 @@ sub _send {
 sub info {
     my ($self, $message) = @_;
     my $timestamp = localtime;
-    my @webhook_urls = load_urls;
-    _send("[$timestamp] INFO: $message\n", $webhook_urls[0]);
+    _send("[$timestamp] INFO: $message\n", $self->{_info_webhook_url});
 }
 
 sub error {
     my ($self, $message) = @_;
     my $timestamp = localtime;
-    my @webhook_urls = load_urls;
-    _send("[$timestamp] ERROR: $message\n", $webhook_urls[1]);
+    _send("[$timestamp] ERROR: $message\n", $self->{_error_webhook_url});
 }
 
 1;

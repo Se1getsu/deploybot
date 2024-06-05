@@ -14,9 +14,20 @@ subtype 'LoggerRoleObject',
     where { $_->does('Role::LoggerRole') },
     message { "The object you provided does not implement LoggerRole" };
 
+subtype 'TargetExecutionStrategyObject',
+    as 'Object',
+    where { $_->does('Role::TargetExecutionStrategy') },
+    message { "The object you provided does not implement TargetExecutionStrategy" };
+
 has 'logger' => (
     is       => 'ro',
     isa      => 'LoggerRoleObject',
+    required => 1
+);
+
+has 'target_executor' => (
+    is       => 'ro',
+    isa      => 'TargetExecutionStrategyObject',
     required => 1
 );
 
@@ -26,8 +37,44 @@ sub _test_log {
     $self->logger->error("**This channel is assigned to [1] dpb error log**");
 }
 
-sub _exec_repository {
-    exec('python3', 'main.py') or die "Failed to execute main.py: $!\n";
+sub _load_target_info {
+    my ($target_dir) = @_;
+    my $absolute_target_dir = Cwd::abs_path($target_dir);
+    my $original_dir = getcwd();
+
+    chdir($target_dir) or die "Directory $target_dir not found: $!\n";
+
+    my ($origin_url, $error) = get_origin_url;
+    die $error if defined $error;
+
+    (my $branch_name, $error) = get_branch_name;
+    die $error if defined $error;
+    die "You are in 'detached HEAD' state.\n" if $branch_name eq "HEAD";
+
+    my %result = (
+        path => $absolute_target_dir,
+        origin_url => $origin_url,
+        branch_name => $branch_name
+    );
+
+    print "--- TARGET INFO ---\n";
+    while (my ($key, $value) = each %result) {
+        print "$key: $value\n";
+    }
+    print "\n";
+
+    return %result
+}
+
+sub _exec_repotitory {
+    my ($self) = @_;
+    my $error = $self->{target_executor}->execute;
+    if (defined $error) {
+        $self->{logger}->error("Target run-time error: $error");
+    } else {
+        $self->{logger}->info("The target execution has completed successfully.")
+    }
+    exit 0;
 }
 
 sub _needs_deploy {
@@ -61,7 +108,7 @@ sub _depoy {
     if (my $pid = fork()) {     # parent process
         $self->{_exec_pid} = $pid;
     } elsif (defined $pid) {    # child process
-        _exec_repository;
+        _exec_repotitory $self;
     } else {
         return "Failed to fork: $!\n";
     }
@@ -81,34 +128,14 @@ sub run {
         die "Usage: $0 <target_directory_path>\n";
     }
 
-    my $target_dir = $args[0];
-    my $absolute_target_dir = Cwd::abs_path($target_dir);
-    my $original_dir = getcwd();
+    my %info = _load_target_info $args[0];
 
-    chdir($target_dir) or die "Directory $target_dir not found: $!\n";
-
-    my ($result, $error) = get_origin_url;
-    die $error if defined $error;
-    my $origin_url = $result;
-
-    ($result, $error) = get_branch_name;
-    die $error if defined $error;
-    die "You are in 'detached HEAD' state.\n" if $result eq "HEAD";
-    $self->{_branch_name} = $result;
-
-    print <<EOD;
---- TARGET INFO ---
-path: $absolute_target_dir
-origin_url: $origin_url
-branch_name: $self->{_branch_name}
-
---- START RUNNING ---
-EOD
-
+    $self->{_branch_name} = $info{branch_name};
     $self->{_initial_pull} = 1;
     $self->{_prev_commit} = "";
     $self->{_exec_pid} = 0;
 
+    print "--- START RUNNING ---\n";
     $self->logger->info("**dpb (DeployBot) started.**");
     _test_log $self;
 
