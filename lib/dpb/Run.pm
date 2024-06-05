@@ -37,6 +37,17 @@ sub _test_log {
     $self->logger->error("**This channel is assigned to [1] dpb error log**");
 }
 
+sub _exec_repotitory {
+    my ($self) = @_;
+    my $error = $self->{target_executor}->execute;
+    if (defined $error) {
+        $self->{logger}->error("Target run-time error: $error");
+    } else {
+        $self->{logger}->info("The target execution has completed successfully.")
+    }
+    exit 0;
+}
+
 sub _needs_deploy {
     my $self = shift;
     return 1 if $self->{_initial_pull};
@@ -68,13 +79,7 @@ sub _depoy {
     if (my $pid = fork()) {     # parent process
         $self->{_exec_pid} = $pid;
     } elsif (defined $pid) {    # child process
-        my $error = $self->{target_executor}->execute;
-        if (defined $error) {
-            $self->{logger}->error("Target run-time error: $error");
-        } else {
-            $self->{logger}->info("The target execution has completed successfully.")
-        }
-        exit 0;
+        _exec_repotitory $self;
     } else {
         return "Failed to fork: $!\n";
     }
