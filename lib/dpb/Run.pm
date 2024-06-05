@@ -14,9 +14,20 @@ subtype 'LoggerRoleObject',
     where { $_->does('Role::LoggerRole') },
     message { "The object you provided does not implement LoggerRole" };
 
+subtype 'TargetExecutionStrategyObject',
+    as 'Object',
+    where { $_->does('Role::TargetExecutionStrategy') },
+    message { "The object you provided does not implement TargetExecutionStrategy" };
+
 has 'logger' => (
     is       => 'ro',
     isa      => 'LoggerRoleObject',
+    required => 1
+);
+
+has 'target_executor' => (
+    is       => 'ro',
+    isa      => 'TargetExecutionStrategyObject',
     required => 1
 );
 
@@ -24,10 +35,6 @@ sub _test_log {
     my ($self) = @_;
     $self->logger->info("**This channel is assigned to [0] dpb standard log**");
     $self->logger->error("**This channel is assigned to [1] dpb error log**");
-}
-
-sub _exec_repository {
-    exec('python3', 'main.py') or die "Failed to execute main.py: $!\n";
 }
 
 sub _needs_deploy {
@@ -61,7 +68,13 @@ sub _depoy {
     if (my $pid = fork()) {     # parent process
         $self->{_exec_pid} = $pid;
     } elsif (defined $pid) {    # child process
-        _exec_repository;
+        my $error = $self->{target_executor}->execute;
+        if (defined $error) {
+            $self->{logger}->error("Target run-time error: $error");
+        } else {
+            $self->{logger}->info("The target execution has completed successfully.")
+        }
+        exit 0;
     } else {
         return "Failed to fork: $!\n";
     }

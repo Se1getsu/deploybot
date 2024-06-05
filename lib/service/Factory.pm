@@ -8,6 +8,7 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw(create);
 
 use Module::Load;
+use Adapter::TargetShellExecutor;
 use Adapter::WebhookLogger;
 use Adapter::WebhookURLRepository 'load_urls';
 
@@ -31,7 +32,8 @@ sub create {
             logger => Adapter::WebhookLogger->new(
                 info_webhook => $webhook_urls[0],
                 error_webhook => $webhook_urls[1],
-            )
+            ),
+            target_executor => Adapter::TargetShellExecutor->new()
         );
 
     } elsif ($module eq 'Dpb::Log') {
