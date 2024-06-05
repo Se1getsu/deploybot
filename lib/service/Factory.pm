@@ -33,7 +33,10 @@ sub create {
                 info_webhook => $webhook_urls[0],
                 error_webhook => $webhook_urls[1],
             ),
-            target_executor => Adapter::TargetShellExecutor->new()
+            target_executor => Adapter::TargetShellExecutor->new(
+                info_webhook => $webhook_urls[2],
+                error_webhook => $webhook_urls[3],
+            )
         );
 
     } elsif ($module eq 'Dpb::Log') {
