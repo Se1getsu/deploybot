@@ -1,0 +1,18 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Cwd 'abs_path';
+use File::Path qw(make_path);
+use File::Basename;
+
+my $file = "data/webhook_url";
+
+if (!-e $file) {
+    make_path(dirname($file));
+    open(my $fh, '>', $file) or die "Could not open file '$file' $!";
+    print $fh "default\ndefault\ndefault\ndefault\n";
+    close $fh;
+}
+
+system "carton install";
