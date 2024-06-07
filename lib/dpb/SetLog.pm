@@ -29,13 +29,13 @@ sub run {
     unless (@_ == 2 && ($webhook =~ m{^(?:https?)://\S+$} || $webhook eq "default") && $index =~ /^\d+$/) {
         _show_usage; exit 1;
     }
-    unless (0 <= $index && $index <= 3) {
+    unless (1 <= $index && $index <= 4) {
         print "Invalid index: $index\n";
         exit 1;
     }
 
     my @urls = load_urls;
-    $urls[$index] = $webhook;
+    $urls[$index - 1] = $webhook;
     save_urls @urls;
 }
 
