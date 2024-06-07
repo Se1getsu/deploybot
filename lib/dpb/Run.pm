@@ -7,6 +7,7 @@ use Cwd;
 use Moose;
 use Moose::Util::TypeConstraints;
 use POSIX ":sys_wait_h";
+use Getopt::Long qw(GetOptionsFromArray);
 use Adapter::Git;
 
 subtype 'LoggerRoleObject',
@@ -123,9 +124,14 @@ sub _depoy {
 sub run {
     my $self = shift;
     my @args = @_;
+    my $interval = 10;
+
+    GetOptionsFromArray(\@args,
+        "interval|i=i" => \$interval,
+    ) or exit 1;
 
     if (@args != 1) {
-        die "Usage: $0 <target_directory_path>\n";
+        die "Usage: $0 run [-i | --interval <minutes>] <target_directory_path>\n";
     }
 
     my %info = _load_target_info $args[0];
@@ -151,8 +157,7 @@ sub run {
             $self->logger->info("No updates.");
         }
 
-        sleep(10);  # TODO: スリープ間隔戻す
-        # sleep(300); # Wait for 5 minutes
+        sleep($interval * 60);
     }
 }
 

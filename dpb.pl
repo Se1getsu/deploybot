@@ -30,11 +30,6 @@ Commands:
 EOD
 }
 
-GetOptions(
-    "version|v"  => sub { show_version; exit; },
-    "help|h"  => sub { show_usage; exit; },
-) or exit 1;
-
 my %subcommands = (
     'hello'   => 'Dpb::Hello',
     'run'     => 'Dpb::Run',
@@ -42,13 +37,22 @@ my %subcommands = (
     'set-log' => 'Dpb::SetLog',
 );
 
-my $subcommand = shift @ARGV;
-unless ($subcommand) { show_usage; exit 1; }
+unless (@ARGV) { show_usage; exit 1; }
 
-if (exists $subcommands{$subcommand}) {
+if ($ARGV[0] =~ /^-/) {
+    GetOptions(
+        "version|v"  => sub { show_version; },
+        "help|h"  => sub { show_usage; },
+    ) or exit 1;
+    exit;
+
+} elsif (exists $subcommands{$ARGV[0]}) {
+    my $subcommand = shift @ARGV;
     my $module = $subcommands{$subcommand};
     create($module)->run(@ARGV);
+
 } else {
+    my $subcommand = shift @ARGV;
     print "Unknown subcommand: $subcommand\n";
     exit 1;
 }
