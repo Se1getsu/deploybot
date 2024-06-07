@@ -8,7 +8,7 @@ use lib "$FindBin::Bin/lib";
 use Service::Factory;
 use Getopt::Long;
 
-my $_version = "1.0.0-dev";
+my $_version = "1.0.0";
 
 sub show_version {
     print "dpb version $_version\n";
