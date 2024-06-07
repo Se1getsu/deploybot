@@ -14,13 +14,13 @@ sub new {
 sub info {
     my ($self, $message) = @_;
     my $timestamp = localtime;
-    print "[$timestamp] INFO: $message\n";
+    print STDOUT "[$timestamp] INFO: $message\n";
 }
 
 sub error {
     my ($self, $message) = @_;
     my $timestamp = localtime;
-    print "[$timestamp] ERROR: $message\n";
+    print STDERR "[$timestamp] ERROR: $message\n";
 }
 
 1;

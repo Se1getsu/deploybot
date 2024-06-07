@@ -9,6 +9,7 @@ use Adapter::WebhookURLRepository;
 sub _show_usage {
     print <<EOD;
 usage: $0 set-log [-h | --help] <webhook-url> <index>
+       $0 set-log default <index>
 
 Options:
   -h    print this help message and exit
@@ -23,9 +24,9 @@ sub run {
         "help|h"       => sub { _show_usage; exit; },
     ) or exit 1;
 
-    my ($given_url, $index) = @args;
+    my ($webhook, $index) = @args;
 
-    unless (@_ == 2 && $given_url =~ m{^(?:https?)://\S+$} && $index =~ /^\d+$/) {
+    unless (@_ == 2 && ($webhook =~ m{^(?:https?)://\S+$} || $webhook eq "default") && $index =~ /^\d+$/) {
         _show_usage; exit 1;
     }
     unless (0 <= $index && $index <= 3) {
@@ -34,7 +35,7 @@ sub run {
     }
 
     my @urls = load_urls;
-    $urls[$index] = $given_url;
+    $urls[$index] = $webhook;
     save_urls @urls;
 }
 

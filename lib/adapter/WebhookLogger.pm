@@ -11,8 +11,8 @@ use JSON::MaybeXS;
 sub new {
     my ($class, %args) = @_;
     my $self = {
-        _info_webhook_url   => $args{info_webhook},
-        _error_webhook_url  => $args{error_webhook},
+        _info_webhook   => $args{info_webhook},
+        _error_webhook  => $args{error_webhook},
     };
     return bless $self, $class;
 }
@@ -27,13 +27,23 @@ sub _send {
 sub info {
     my ($self, $message) = @_;
     my $timestamp = localtime;
-    _send("[$timestamp] INFO: $message\n", $self->{_info_webhook_url});
+    my $content = "[$timestamp] INFO: $message\n";
+    if ($self->{_info_webhook} eq "default") {
+        print STDOUT $content;
+    } else {
+        _send($content, $self->{_info_webhook});
+    }
 }
 
 sub error {
     my ($self, $message) = @_;
     my $timestamp = localtime;
-    _send("[$timestamp] ERROR: $message\n", $self->{_error_webhook_url});
+    my $content = "[$timestamp] ERROR: $message\n";
+    if ($self->{_error_webhook} eq "default") {
+        print STDERR $content;
+    } else {
+        _send($content, $self->{_error_webhook});
+    }
 }
 
 1;
