@@ -32,6 +32,18 @@ has 'target_executor' => (
     required => 1
 );
 
+my constant $DEFAULT_INTERVAL = 10;
+
+sub _show_usage {
+    print <<EOD;
+usage: $0 run [-h | --help] [-i | --interval <minutes>] <target_directory_path>
+
+Options:
+  -h    print this help message and exit
+  -i    set the interval of minutes between deployments (default: $DEFAULT_INTERVAL)
+EOD
+}
+
 sub _test_log {
     my ($self) = @_;
     $self->logger->info("**This channel is assigned to [0] dpb standard log**");
@@ -124,15 +136,14 @@ sub _depoy {
 sub run {
     my $self = shift;
     my @args = @_;
-    my $interval = 10;
+    my $interval = $DEFAULT_INTERVAL;
 
     GetOptionsFromArray(\@args,
+        "help|h"       => sub { _show_usage; exit; },
         "interval|i=i" => \$interval,
     ) or exit 1;
 
-    if (@args != 1) {
-        die "Usage: $0 run [-i | --interval <minutes>] <target_directory_path>\n";
-    }
+    if (@args != 1) {  _show_usage; exit 1; }
 
     my %info = _load_target_info $args[0];
 
