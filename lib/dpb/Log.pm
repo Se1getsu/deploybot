@@ -11,7 +11,7 @@ sub run {
 
     my @urls = load_urls;
     while(my ($i,$url) = each @urls){
-        print "$i: $url\n";
+        print(($i+1) . ": $url\n");
     }
 }
 
