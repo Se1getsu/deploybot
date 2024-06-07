@@ -7,6 +7,7 @@ use Cwd;
 use Moose;
 use Moose::Util::TypeConstraints;
 use POSIX ":sys_wait_h";
+use Getopt::Long qw(GetOptionsFromArray);
 use Adapter::Git;
 
 subtype 'LoggerRoleObject',
@@ -30,6 +31,18 @@ has 'target_executor' => (
     isa      => 'TargetExecutionStrategyObject',
     required => 1
 );
+
+my constant $DEFAULT_INTERVAL = 10;
+
+sub _show_usage {
+    print <<EOD;
+usage: $0 run [-h | --help] [-i | --interval <minutes>] <target_directory_path>
+
+Options:
+  -h    print this help message and exit
+  -i    set the interval of minutes between deployments (default: $DEFAULT_INTERVAL)
+EOD
+}
 
 sub _test_log {
     my ($self) = @_;
@@ -123,10 +136,14 @@ sub _depoy {
 sub run {
     my $self = shift;
     my @args = @_;
+    my $interval = $DEFAULT_INTERVAL;
 
-    if (@args != 1) {
-        die "Usage: $0 <target_directory_path>\n";
-    }
+    GetOptionsFromArray(\@args,
+        "help|h"       => sub { _show_usage; exit; },
+        "interval|i=i" => \$interval,
+    ) or exit 1;
+
+    if (@args != 1) {  _show_usage; exit 1; }
 
     my %info = _load_target_info $args[0];
 
@@ -151,8 +168,7 @@ sub run {
             $self->logger->info("No updates.");
         }
 
-        sleep(10);  # TODO: スリープ間隔戻す
-        # sleep(300); # Wait for 5 minutes
+        sleep($interval * 60);
     }
 }
 
