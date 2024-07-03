@@ -4,19 +4,35 @@
 
 # Installation
 
-クローンしたら以下のコマンドでセットアップを行ってください。
+1. このリポジトリをクローン後、以下のコマンドでセットアップを行います。
 
 ```
-./setup
+$ cd deploybot
+$ ./setup
 ```
 
-以下のコマンドで deploybot を利用できます。(ヘルプを表示する)
+2. `~/.bashrc`に以下を記述して、dpbコマンドを登録します。
 
 ```
-./dpb -h
+dpb() {
+    args=()
+    for arg in "$@"; do
+        if [ -e "$arg" ]; then
+            args+=("$(realpath "$arg")")
+        else
+            args+=("$arg")
+        fi
+    done
+    (cd ~/deploybot && carton exec -- ./dpb ${args[@]})
+}
 ```
+※最後から2行目の`~/deploybot`は、自身がクローンしたdeploybotのバスに置き換えてください。
 
-`.bashrc` や `.zshrc` に `dpb` の絶対パスをエイリアスとして登録すると便利です。
+3. 以下のコマンドでdpbコマンドのバージョンが表示されれば成功です。
+
+```
+$ dpb -v
+```
 
 # Tutorial
 
