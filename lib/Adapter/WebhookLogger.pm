@@ -6,6 +6,7 @@ use warnings;
 use Moose;
 with 'Role::LoggerRole';
 
+use DateTime;
 use JSON::MaybeXS;
 
 sub new {
@@ -26,7 +27,9 @@ sub _send {
 
 sub info {
     my ($self, $message) = @_;
-    my $timestamp = localtime;
+    my $timestamp = DateTime
+        ->now(time_zone => 'Asia/Tokyo')
+        ->strftime('%Y-%m-%d %H:%M:%S');
     my $content = "[$timestamp] INFO: $message\n";
     if ($self->{_info_webhook} eq "default") {
         print STDOUT $content;
@@ -37,7 +40,9 @@ sub info {
 
 sub error {
     my ($self, $message) = @_;
-    my $timestamp = localtime;
+    my $timestamp = DateTime
+        ->now(time_zone => 'Asia/Tokyo')
+        ->strftime('%Y-%m-%d %H:%M:%S');
     my $content = "[$timestamp] ERROR: $message\n";
     if ($self->{_error_webhook} eq "default") {
         print STDERR $content;
